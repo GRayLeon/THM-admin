@@ -22,6 +22,11 @@ const items = ref<NavigationMenuItem[][]>([
       label: '帳號管理',
       icon: 'i-lucide-user',
       to: '/admin/users',
+    },
+    {
+      label: '角色管理',
+      icon: 'i-lucide-group',
+      to: '/admin/roles',
     }
   ]
 ])

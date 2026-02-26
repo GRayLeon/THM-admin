@@ -16,4 +16,10 @@ export default defineNuxtConfig({
   },
 
   compatibilityDate: '2025-01-15',
+
+  runtimeConfig: {
+    public: {
+      useMockApi: true // 開發階段開啟
+    }
+  }
 })
