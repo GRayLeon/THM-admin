@@ -1,5 +1,4 @@
 // services/index.service.ts
-import { storeToRefs } from 'pinia'
 
 import type {
   IndexData,

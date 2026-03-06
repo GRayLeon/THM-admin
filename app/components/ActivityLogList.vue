@@ -1,6 +1,5 @@
 <script setup lang="ts">
   import { useActivityLogs } from '@/composables/useActivityLogs'
-import { a } from 'vue-router/dist/index-DFCq6eJK.js';
 
   const { activityLogs, getActivityLogs } = useActivityLogs();
 
