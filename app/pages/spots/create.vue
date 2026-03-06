@@ -4,7 +4,5 @@
   })
 </script>
 <template>
-  <div>
-    <h1>Position</h1>
-  </div>
+  <SpotEditor></SpotEditor>
 </template>

@@ -1,11 +1,18 @@
 <script setup lang="ts">
-import SideBar from '~/components/layout/SideBar.vue';
+import SideBar from '@/components/layout/SideBar.vue';
+import { useAuthStore } from '@/stores/auth.store';
+
+const { logout } = useAuthStore()
+
 </script>
 <template>
   <div class="flex flex-col h-full relative">
-    <div class="flex flex-row justify-between w-full p-4 border-b sticky top-0 bg-black z-50">
-      <span>THM ADMIN</span>
-      <span>前台網頁</span>
+    <div class="flex flex-row justify-between w-full p-4 border-b sticky top-0 backdrop-blur-md z-50">
+      <span>THM 720｜淡水古蹟博物館導覽後台</span>
+      <div class="flex flex-row gap-1">
+        <a  class="underline cursor-pointer">前台</a>
+        <span @click="logout()" class="underline cursor-pointer">登出</span>
+      </div>
     </div>
     <div class="flex flex-row flex-1">
       <div class="flex flex-col p-8 border-r">

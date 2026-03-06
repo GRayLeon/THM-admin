@@ -1,4 +1,4 @@
-import type { User, CreateUserPayload, UpdateUserPayload } from '@/models/user.model'
+import type { User, CreateUserPayload } from '@/models/user.model'
 import { 
   useUserService
 } from '@/services/user.service'
@@ -10,9 +10,81 @@ const {
   deleteUser
 } = useUserService()
 
+export type UserFormState = {
+  id?: number
+  account: string
+  password?: string
+  roleCode: string
+  status: 'ACTIVE' | 'INACTIVE'
+  isNew: boolean
+}
+
 export function useUsers() {
 
+  const formStates = ref<UserFormState[]>([])
+
+  const createEmptyForm = (): UserFormState => ({
+    id: undefined,
+    account: '',
+    password: '',
+    roleCode: '',
+    status: 'ACTIVE',
+    isNew: true
+  })
+
   const users = ref<User[]>([])
+
+  const addForm = () => {
+    formStates.value.push(createEmptyForm())
+  }
+
+  const saveForm = async (form: UserFormState) => {
+    load.startLoad()
+
+    try {
+      if (form.isNew) {
+        const payload: CreateUserPayload = {
+          account: form.account,
+          password: form.password ?? '',
+          roleCode: form.roleCode
+        }
+
+        const res = await createUser(payload)
+        form.id = res.data.id
+        form.isNew = false
+        toast.show(res.message, 'success')
+      } else {
+        if (!form.id) return
+
+        const res = await updateUser(form.id, form)
+        toast.show(res.message, 'success')
+      }
+
+      return true
+    } catch (err: any) {
+      handleValidationError(err)
+      return false
+    } finally {
+      load.endLoad()
+    }
+  }
+
+  const removeItem = async (id: number, index: number = -1) => {
+    load.startLoad()
+    try {
+      if (id !== 0) {
+        await removeUser(id)
+        toast.show('刪除成功', 'success')
+      } else {
+        formStates.value.splice(index, 1)
+      }  
+    } catch (err: any) {
+      handleValidationError(err)
+      return false
+    } finally {
+      load.endLoad()
+    }
+  }
 
   const toast = useToastStore()
   const load = useLoadingStore()
@@ -23,46 +95,17 @@ export function useUsers() {
     try {
       const res = await fetchUsers()
       users.value = res.data
-      toast.show(res.message, 'success')
+      const activeUsers = res.data.filter(u => u.status === 'ACTIVE')
+      formStates.value = activeUsers.map(u => ({
+        id: u.id,
+        account: u.account,
+        roleCode: u.roleCode,
+        status: u.status,
+        password: '',
+        isNew: false
+      }))
     } catch (err: any) {
       toast.show(err?.data?.message || '取得使用者失敗', 'error')
-    } finally {
-      load.endLoad()
-    }
-  }
-
-  // 新增
-  const addUser = async (payload: CreateUserPayload) => {
-    load.startLoad()
-    try {
-      const res = await createUser(payload)
-      users.value.push(res.data)
-      toast.show(res.message, 'success')
-      return true
-    } catch (err: any) {
-      handleValidationError(err)
-      return false
-    } finally {
-      load.endLoad()
-    }
-  }
-
-  // 修改
-  const editUser = async (id: number, payload: UpdateUserPayload) => {
-    load.startLoad()
-    try {
-      const res = await updateUser(id, payload)
-
-      const index = users.value.findIndex(u => u.id === id)
-      if (index !== -1) {
-        users.value[index] = res.data
-      }
-
-      toast.show(res.message, 'success')
-      return true
-    } catch (err: any) {
-      handleValidationError(err)
-      return false
     } finally {
       load.endLoad()
     }
@@ -73,14 +116,10 @@ export function useUsers() {
     load.startLoad()
     try {
       const res = await deleteUser(id)
-
       users.value = users.value.filter(u => u.id !== id)
-
       toast.show(res.message, 'success')
-      return true
     } catch (err: any) {
       toast.show(err?.data?.message || '刪除失敗', 'error')
-      return false
     } finally {
       load.endLoad()
     }
@@ -101,8 +140,9 @@ export function useUsers() {
   return {
     users,
     reload: getUsers,
-    addUser,
-    editUser,
-    removeUser
+    formStates,
+    addForm,
+    saveForm,
+    removeItem
   }
 }

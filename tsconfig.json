@@ -1,10 +1,19 @@
 {
-  // https://nuxt.com/docs/guide/concepts/typescript
+  "compilerOptions": {
+    "ignoreDeprecations": "5.0", // 消除棄用警告
+    "paths": {
+      "~/*": ["./*"],
+      "@/*": ["./*"]
+    }
+  },
   "files": [],
   "references": [
     { "path": "./.nuxt/tsconfig.app.json" },
     { "path": "./.nuxt/tsconfig.server.json" },
     { "path": "./.nuxt/tsconfig.shared.json" },
     { "path": "./.nuxt/tsconfig.node.json" }
+  ],
+  "include": [
+    "types/**/*.d.ts" // 確保 TS 引擎掃描到你的定義檔
   ]
 }

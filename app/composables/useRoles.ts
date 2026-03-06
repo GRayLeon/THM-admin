@@ -1,4 +1,4 @@
-import type { Role, RoleUI, RolePayload } from '@/models/role.model'
+import type { Role, RoleUI, CreateRolePayload, UpdateRolePayload } from '@/models/role.model'
 import { 
   useRoleService
 } from '@/services/role.service'
@@ -12,9 +12,88 @@ const {
   deleteRole
 } = useRoleService()
 
+export type RoleFormState = {
+  code: string,
+  name: string,
+  description?: string,
+  functions: string[],
+  isNew: boolean
+}
+
 export function useRoles() {
 
+  const formStates = ref<RoleFormState[]>([])
+
+  const createEmptyForm = (): RoleFormState => ({
+    code: '',
+    name: '',
+    description: '',
+    functions: [],
+    isNew: true
+  })
+
   const roles = ref<Role[]>([])
+
+  const tempRoles = ref<Role[]>([])
+
+  const addForm = () => {
+    formStates.value.push(createEmptyForm())
+  }
+
+  const saveForm = async (form: RoleFormState) => {
+    load.startLoad()
+
+    try {
+      if (form.isNew) {
+        const payload: CreateRolePayload = {
+          code: form.code,
+          name: form.name,
+          description: form.description,
+          functionCodes: form.functions
+        }
+
+        const res = await createRole(payload)
+        form.code = res.data.code
+        form.isNew = false
+        toast.show(res.message, 'success')
+      } else {
+        if (!form.code) return
+
+        const payload: UpdateRolePayload = {
+          name: form.name,
+          description: form.description,
+          functionCodes: form.functions
+        }
+
+        const res = await updateRole(form.code, payload)
+        toast.show(res.message, 'success')
+      }
+
+      return true
+    } catch (err: any) {
+      handleValidationError(err)
+      return false
+    } finally {
+      load.endLoad()
+    }
+  }
+
+  const removeItem = async (code: string, index: number = -1) => {
+    load.startLoad()
+    try {
+      if (code) {
+        await removeRole(code)
+        toast.show('刪除成功', 'success')
+      } else {
+        formStates.value.splice(index, 1)
+      }  
+    } catch (err: any) {
+      handleValidationError(err)
+      return false
+    } finally {
+      load.endLoad()
+    }
+  }
 
   const toast = useToastStore()
   const load = useLoadingStore()
@@ -27,17 +106,10 @@ export function useRoles() {
     { id: 'THEME_MGMT', label: '分類管理' }
   ])
 
-  const roleUIList = ref<RoleUI[]>([])
-
   const toRoleUI = (role: Role): RoleUI => ({
     ...role,
-    functions: role.functions.map(f => f.code)
-  })
-
-  const toRolePayload = (role: RoleUI): RolePayload => ({
-    name: role.name,
-    description: role.description,
-    functionCodes: role.functions
+    functions: role.functions.map(f => f.code),
+    isNew: false
   })
 
   // 取得列表
@@ -46,55 +118,9 @@ export function useRoles() {
     try {
       const res = await fetchRoles()
       roles.value = res.data
-      roleUIList.value = res.data.map(toRoleUI) // 👈 在這裡轉
-      toast.show(res.message, 'success')
+      formStates.value = roles.value.map(toRoleUI)
     } catch (err: any) {
       toast.show(err?.data?.message || '取得角色失敗', 'error')
-    } finally {
-      load.endLoad()
-    }
-  }
-
-  // 新增
-  const addRole = async (payload: RolePayload) => {
-    load.startLoad()
-    try {
-      const res = await createRole(payload)
-      roles.value.push(res.data)
-      toast.show(res.message, 'success')
-      return true
-    } catch (err: any) {
-      handleValidationError(err)
-      return false
-    } finally {
-      load.endLoad()
-    }
-  }
-
-  // 修改
-  const editRole = async (role: RoleUI) => {
-    load.startLoad()
-    try {
-      const payload = toRolePayload(role)
-      const res = await updateRole(role.code, payload)
-
-      // 更新 API model
-      const index = roles.value.findIndex(r => r.code === role.code)
-      if (index !== -1) {
-        roles.value[index] = res.data
-      }
-
-      // 同步更新 UI model
-      const uiIndex = roleUIList.value.findIndex(r => r.code === role.code)
-      if (uiIndex !== -1) {
-        roleUIList.value[uiIndex] = toRoleUI(res.data)
-      }
-
-      toast.show(res.message, 'success')
-      return true
-    } catch (err: any) {
-      handleValidationError(err)
-      return false
     } finally {
       load.endLoad()
     }
@@ -132,12 +158,12 @@ export function useRoles() {
 
   return {
     roles,
-    roleUIList,
     roleOption,
     functionOption,
+    formStates,
     reload: getRoles,
-    addRole,
-    editRole,
-    removeRole
+    addForm,
+    saveForm,
+    removeItem
   }
 }

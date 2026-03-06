@@ -2,9 +2,7 @@ export type UserStatus = 'ACTIVE' | 'INACTIVE'
 
 export interface User {
   id: number
-  fullName: string
   account: string
-  email: string | null
   status: UserStatus
   roleCode: string
   roleName: string
@@ -13,10 +11,8 @@ export interface User {
 // Request DTO
 
 export interface CreateUserPayload {
-  fullName: string
   account: string
   password: string
-  email?: string
   roleCode: string
 }
 

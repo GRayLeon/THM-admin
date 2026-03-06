@@ -1,7 +1,9 @@
 // services/role.service.ts
+
 import type { 
   Role,
-  RolePayload
+  CreateRolePayload,
+  UpdateRolePayload
 } from '@/models/role.model'
 
 import type { ApiResponse } from '@/types/api-response'
@@ -10,71 +12,40 @@ import type { ApiResponse } from '@/types/api-response'
 🔁 Mock Data
 */
 
-export let mockRoles: Role[] = [
-  {
-    code: 'ADMIN',
-    name: '管理員',
-    description: '所有權限的管理員',
-    functions: [
-      { code: 'HOME_MGMT', name: '首頁管理' },
-      { code: 'SPOT_MGMT', name: '地點管理' },
-      { code: 'THEME_MGMT', name: '分類管理' },
-      { code: 'USER_MGMT', name: '帳號管理' },
-      { code: 'ROLE_MGMT', name: '角色管理' }
-    ]
-  },
-  {
-    code: 'USER',
-    name: '一般使用者',
-    description: '可以編輯內容',
-    functions: [
-      { code: 'HOME_MGMT', name: '首頁管理' },
-      { code: 'SPOT_MGMT', name: '地點管理' }
-    ]
-  }
-]
-
-function mockResponse<T>(data: T, message = '操作成功'): ApiResponse<T> {
-  return {
-    success: true,
-    message,
-    data,
-    timestamp: new Date().toISOString()
-  }
-}
-
-function delay(ms = 500) {
-  return new Promise(resolve => setTimeout(resolve, ms))
-}
+import { mockRoles, mockResponse, delay } from '@/mock/mock'
 
 /* 
 📡 Service
 */
 
-const BASE = '/api/v1/roles'
-
 export function useRoleService() {
+
+  const apiUrl = 'https://api.thm720.com/cms-service'
+  const BASE = `${apiUrl}/api/v1/roles`
 
   // 取得全部
   const fetchRoles = async (): Promise<ApiResponse<Role[]>> => {
     const config = useRuntimeConfig()
     const isMock = config.public.useMockApi
 
+    const { $api } = useNuxtApp()
+
     if (isMock) {
       await delay()
       return mockResponse(mockRoles, '查詢成功 (mock)')
     }
-
-    // 真實 API（保留）
-    return $fetch<ApiResponse<Role[]>>(BASE, {
+    
+    return $api<ApiResponse<Role[]>>(BASE, {
       method: 'GET'
     })
   }
 
   // 新增
-  const createRole = async (payload: RolePayload): Promise<ApiResponse<Role>> => {
+  const createRole = async (payload: CreateRolePayload): Promise<ApiResponse<Role>> => {
     const config = useRuntimeConfig()
     const isMock = config.public.useMockApi
+
+    const { $api } = useNuxtApp()
 
     if (isMock) {
       await delay()
@@ -97,16 +68,18 @@ export function useRoleService() {
       return mockResponse(newRole, '新增成功 (mock)')
     }
 
-    return $fetch<ApiResponse<Role>>(BASE, {
+    return $api<ApiResponse<Role>>(BASE, {
       method: 'POST',
       body: payload
     })
   }
 
   // 修改
-  const updateRole = async (code: string, payload: RolePayload): Promise<ApiResponse<Role>> => {
+  const updateRole = async (code: string, payload: UpdateRolePayload): Promise<ApiResponse<Role>> => {
     const config = useRuntimeConfig()
     const isMock = config.public.useMockApi
+
+    const { $api } = useNuxtApp()
 
     if (isMock) {
       await delay()
@@ -138,7 +111,7 @@ export function useRoleService() {
       return mockResponse(role, '修改成功 (mock)')
     }
 
-    return $fetch<ApiResponse<Role>>(`${BASE}/${code}`, {
+    return $api<ApiResponse<Role>>(`${BASE}/${code}`, {
       method: 'PUT',
       body: payload
     })
@@ -148,6 +121,8 @@ export function useRoleService() {
     const config = useRuntimeConfig()
     const isMock = config.public.useMockApi
 
+    const { $api } = useNuxtApp()
+
     if (isMock) {
       await delay()
       const index = mockRoles.findIndex(r => r.code === code)
@@ -156,7 +131,7 @@ export function useRoleService() {
       return mockResponse(null, '角色已刪除 (mock)')
     }
 
-    return $fetch<ApiResponse<null>>(`${BASE}/${code}`, {
+    return $api<ApiResponse<null>>(`${BASE}/${code}`, {
       method: 'DELETE'
     })
   }

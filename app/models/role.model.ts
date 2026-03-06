@@ -12,10 +12,18 @@ export interface Role {
 }
 
 export interface RoleUI extends Omit<Role, 'functions'> {
-  functions: string[]
+  functions: string[],
+  isNew: boolean
 }
 
-export interface RolePayload {
+export interface CreateRolePayload {
+  code: string
+  name: string
+  description?: string
+  functionCodes: string[]
+}
+
+export interface UpdateRolePayload {
   name: string
   description?: string
   functionCodes: string[]
